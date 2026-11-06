@@ -1,19 +1,23 @@
 -- | Standard Guidance for Space Data Exchange
-module Data.Xch (Xch, XDat(..), SVDat(..), ComStat(..), AEInfo(..)) where
+module Data.Xch (Xch, XDat(..), SVDat(..), ComStat(..), AEInfo(..), Cord(..)) where
+
+import Data.Time.Clock.POSIX
 
 -- | exchange
 type Xch = [XDat]
 
 -- | space data
-data XDat
-  = SVDat
-      -- | state identifier
-      String
-      [SVDat]
-  | MsnEvt [String] | ComStat ComStat | AEDat [AEInfo]
+data XDat = SVDat [SVDat] | MsnEvt [String] | ComStat ComStat | AEDat [AEInfo]
 
 -- | State vector data
-data SVDat = Time | Pos | Vel
+data SVDat
+  = -- | component
+    Cmpnt String
+  | Time POSIXTime
+  | -- | position
+    Pos
+  | -- | velocity
+    Vel
 
 -- | Communication health status
 data ComStat = Connect | Degrade | Disconn
@@ -21,8 +25,11 @@ data ComStat = Connect | Degrade | Disconn
 -- | Anomaly and emergency info
 data AEInfo = Ident String
   | -- | activation time and duration
-    ActDurTime
-  | -- | location\/geometry
-    LocGeo
+    ActDurTime Integer Integer
+  | -- | location\/geometry: bounds @(lat,lon)@ and altitude
+    LocGeo [(Cord, Cord)] (Maybe Integer)
   | -- | definition of anomaly
-    Dfn
+    Dfn String
+
+-- | coordinate: degrees, minutes, seconds
+data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Integer}
