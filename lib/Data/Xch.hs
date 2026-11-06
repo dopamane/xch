@@ -1,7 +1,16 @@
-module Data.Xch (Xch(..), SVDat(..), ComStat(..), AEInfo(..)) where
+-- | Standard Guidance for Space Data Exchange
+module Data.Xch (Xch, XDat(..), SVDat(..), ComStat(..), AEInfo(..)) where
 
-data Xch = Xch{ svDat :: [(String, [SVDat])], msnEvt :: [String]
-  , comStat :: ComStat, aeInfo :: [AEInfo] }
+-- | exchange
+type Xch = [XDat]
+
+-- | space data
+data XDat
+  = SVDat
+      -- | state identifier
+      String
+      [SVDat]
+  | MsnEvt [String] | ComStat ComStat | AEDat [AEInfo]
 
 -- | State vector data
 data SVDat = Time | Pos | Vel
@@ -10,4 +19,10 @@ data SVDat = Time | Pos | Vel
 data ComStat = Connect | Degrade | Disconn
 
 -- | Anomaly and emergency info
-data AEInfo = AEInfo
+data AEInfo = Ident String
+  | -- | activation time and duration
+    ActDurTime
+  | -- | location\/geometry
+    LocGeo
+  | -- | definition of anomaly
+    Dfn
