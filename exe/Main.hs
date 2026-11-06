@@ -23,6 +23,13 @@ data CLI = ReadXch (Maybe FilePath) | WriteXch Xch (Maybe FilePath)
 
 parser :: Parser CLI
 parser = hsubparser $ mconcat
-  [ command "r" $ info (pure $ ReadXch Nothing) $ progDesc "Read space data"
-  , command "w" $ info (pure $ WriteXch [] Nothing) $ progDesc "Write space data"
+  [ command "r" $ info (ReadXch <$>
+    optional (fileArg "input file or stream STDIN")) $
+    progDesc "Read space data"
+  , command "w" $ info (WriteXch [] <$>
+    optional (fileArg "output file or stream STDOUT")) $
+    progDesc "Write space data"
   ]
+
+fileArg :: String -> Parser FilePath
+fileArg h = strArgument $ metavar "FILE" <> completer (bashCompleter "file") <> help h
