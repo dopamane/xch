@@ -10,7 +10,7 @@ main = do
   cli <- customExecParser prefs' $ pinfo $ showVersion version
   case cli of
     ReadXch{} -> error "not implemented"
-    WriteXch xch fM -> maybe putStrLn writeFile fM $ writeXch xch
+    WriteXch xch fM -> maybe putStrLn writeFile fM $ wxch xch
 
 prefs' :: ParserPrefs
 prefs' = prefs $ showHelpOnError <> showHelpOnEmpty

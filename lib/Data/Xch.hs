@@ -1,5 +1,5 @@
 -- | Standard Guidance for Space Data Exchange
-module Data.Xch (Xch, writeXch, XDat(..), SVDat(..), ComStat(..)
+module Data.Xch (Xch, wxch, XDat(..), SVDat(..), ComStat(..)
   , AEInfo(..), Cord(..)) where
 
 import Data.List
@@ -8,40 +8,48 @@ import Data.Time.Clock.POSIX
 -- | exchange
 type Xch = [XDat]
 
--- | render exchange data in XML format
-writeXch :: Xch -> String
-writeXch xch = unlines ["<xch>", intercalate "\n" $ ("  " ++) . writeXDat <$> xch, "</xch>"]
+-- | write exchange data in XML format
+wxch :: Xch -> String
+wxch = vtag "xch" . map wxdat
 
 -- | space data
 data XDat = SVDat [SVDat] | MsnEvt [String] | ComStat ComStat | AEDat [AEInfo]
 
-writeXDat :: XDat -> String
-writeXDat xdat = case xdat of
-  SVDat{} -> ""
+wxdat :: XDat -> String
+wxdat xdat = case xdat of
+  SVDat sv -> vtag "svdat" $ wsvdat <$> sv
   MsnEvt{} -> ""
-  ComStat s -> tag "com" $ writeComStat s
+  ComStat s -> tag "com" $ wcomstat s
   AEDat{} -> ""
 
 -- | State vector data
 data SVDat
   = -- | component
     Cmpnt String
-  | Time POSIXTime
+  | -- | timestamp
+    Time POSIXTime
   | -- | position
-    Pos
+    Pos NED
   | -- | velocity
-    Vel
+    Vel NED
+
+wsvdat :: SVDat -> String
+wsvdat s = case s of
+  Cmpnt c -> tag "cmpnt" c
+  Time{} -> ""
+  Pos{} -> ""
+  Vel{} -> ""
 
 -- | Communication health status
 data ComStat = Excelnt | Good | Poor | Lost
   deriving (Bounded, Enum, Eq, Read, Show)
 
-writeComStat :: ComStat -> String
-writeComStat s = case s of
-  Excelnt -> tag_ "excellent"
-  Good -> tag_ "good"
-  Poor -> tag_ "poor"
-  Lost -> tag_ "lost"
+wcomstat :: ComStat -> String
+wcomstat s = tag_ $ case s of
+  Excelnt -> "excellent"
+  Good -> "good"
+  Poor -> "poor"
+  Lost -> "lost"
 
 -- | Anomaly and emergency info
 data AEInfo = Ident String
@@ -54,10 +62,28 @@ data AEInfo = Ident String
 
 -- | coordinate: degrees, minutes, seconds
 data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Integer}
+  deriving (Eq, Read, Show)
+
+-- | coordinate: north, east, down
+data NED = NED{north :: Double, east :: Double, down :: Double}
+  deriving (Eq, Read, Show)
+
+bgn :: String -> String
+bgn t = "<" ++ t ++ ">"
+
+end :: String -> String
+end t = "</" ++ t ++ ">"
 
 tag :: String -> String -> String
-tag tdef "" = "<" ++ tdef ++ "/>"
-tag tdef cs = "<" ++ tdef ++ ">" ++ cs ++ "<" ++ tdef ++ "/>"
+tag t "" = "<" ++ t ++ "/>"
+tag t cs = bgn t ++ cs ++ end t
 
 tag_ :: String -> String
-tag_ tdef = tag tdef ""
+tag_ t = tag t ""
+
+nlines :: [String] -> String
+nlines = intercalate "\n"
+
+vtag :: String -> [String] -> String
+vtag t [] = tag_ t
+vtag t ts = nlines [bgn t, nlines $ ("  " ++) <$> ts, end t]
