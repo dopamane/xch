@@ -13,20 +13,18 @@ wxch :: Xch -> String
 wxch = vtag "xch" . map wxdat
 
 -- | space data
-data XDat = SVDat [SVDat] | MsnEvt [String] | ComStat ComStat | AEDat [AEInfo]
+data XDat = SVDat String [SVDat] | MsnEvt [String] | ComStat ComStat | AEDat [AEInfo]
 
 wxdat :: XDat -> String
 wxdat xdat = case xdat of
-  SVDat sv -> vtag "svdat" $ wsvdat <$> sv
+  SVDat ident sv -> vtag "svdat" $ tag "state" ident : map wsvdat sv
   MsnEvt{} -> ""
   ComStat s -> tag "com" $ wcomstat s
   AEDat{} -> ""
 
 -- | State vector data
 data SVDat
-  = -- | component
-    Cmpnt String
-  | -- | timestamp
+  = -- | timestamp
     Time POSIXTime
   | -- | position
     Pos NED
@@ -35,8 +33,7 @@ data SVDat
 
 wsvdat :: SVDat -> String
 wsvdat s = case s of
-  Cmpnt c -> tag "cmpnt" c
-  Time{} -> ""
+  Time t -> tag "time" $ show t
   Pos{} -> ""
   Vel{} -> ""
 
@@ -61,7 +58,7 @@ data AEInfo = Ident String
     Dfn String
 
 -- | coordinate: degrees, minutes, seconds
-data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Integer}
+data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Double}
   deriving (Eq, Read, Show)
 
 -- | coordinate: north, east, down
@@ -81,9 +78,9 @@ tag t cs = bgn t ++ cs ++ end t
 tag_ :: String -> String
 tag_ t = tag t ""
 
-nlines :: [String] -> String
-nlines = intercalate "\n"
+nls :: [String] -> String
+nls = intercalate "\n"
 
 vtag :: String -> [String] -> String
 vtag t [] = tag_ t
-vtag t ts = nlines [bgn t, nlines $ ("  " ++) <$> ts, end t]
+vtag t ts = nls [bgn t, nls $ ("  " ++) <$> ts, end t]

@@ -35,9 +35,13 @@ fileArg :: String -> Parser FilePath
 fileArg h = strArgument $ metavar "FILE" <> completer (bashCompleter "file") <> help h
 
 parseXDat :: Parser XDat
-parseXDat = parserOptionGroup "communication health status" $ ComStat <$> asum
-  [ flag' Excelnt $ long "excelnt" <> help "excellent connection"
-  , flag' Good $ long "good" <> help "good connection"
-  , flag' Poor $ long "poor" <> help "poor connection"
-  , flag' Lost $ long "lost" <> help "lost connection"
-  ]
+parseXDat = asum
+  [ parserOptionGroup "state vector data" $ SVDat <$>
+    strOption (long "state" <> metavar "STR" <> help "identifier") <*>
+    many (asum [])
+  , parserOptionGroup "communication health status" $ ComStat <$> asum
+    [ flag' Excelnt $ long "excelnt" <> help "excellent connection"
+    , flag' Good $ long "good" <> help "good connection"
+    , flag' Poor $ long "poor" <> help "poor connection"
+    , flag' Lost $ long "lost" <> help "lost connection"
+    ]]
