@@ -26,10 +26,18 @@ parser = hsubparser $ mconcat
   [ command "r" $ info (ReadXch <$>
     optional (fileArg "input file or stream STDIN")) $
     progDesc "Read space data"
-  , command "w" $ info (WriteXch [] <$>
+  , command "w" $ info (WriteXch <$> many parseXDat <*>
     optional (fileArg "output file or stream STDOUT")) $
     progDesc "Write space data"
   ]
 
 fileArg :: String -> Parser FilePath
 fileArg h = strArgument $ metavar "FILE" <> completer (bashCompleter "file") <> help h
+
+parseXDat :: Parser XDat
+parseXDat = parserOptionGroup "communication health status" $ ComStat <$> asum
+  [ flag' Excelnt $ long "excelnt" <> help "excellent connection, default"
+  , flag' Good $ long "good" <> help "good connection"
+  , flag' Poor $ long "poor" <> help "poor connection"
+  , flag' Lost $ long "lost" <> help "lost connection"
+  ]

@@ -20,7 +20,8 @@ data SVDat
     Vel
 
 -- | Communication health status
-data ComStat = Connect | Degrade | Disconn
+data ComStat = Excelnt | Good | Poor | Lost
+  deriving (Eq, Read, Show)
 
 -- | Anomaly and emergency info
 data AEInfo = Ident String
