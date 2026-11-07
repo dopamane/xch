@@ -1,6 +1,6 @@
 -- | Standard Guidance for Space Data Exchange
 module Data.Xch (Xch, wxch, XDat(..), SVDat(..), ComStat(..)
-  , AEInfo(..), Cord(..)) where
+  , AEInfo(..), Cord(..), NED(..)) where
 
 import Data.Time.Clock.POSIX
 import Prettyprinter
@@ -34,8 +34,8 @@ data SVDat
 wsvdat :: SVDat -> Doc ann
 wsvdat s = case s of
   Time t -> tag "time" [pretty $ show t]
-  Pos ned -> vtag "pos" $ wned ned
-  Vel ned -> vtag "vel" $ wned ned
+  Pos ned -> vtag "pos" [wned ned]
+  Vel ned -> vtag "vel" [wned ned]
 
 -- | Communication health status
 data ComStat = Excelnt | Good | Poor | Lost
@@ -65,8 +65,8 @@ data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Double}
 data NED = NED{north :: Double, east :: Double, down :: Double}
   deriving (Eq, Read, Show)
 
-wned :: NED -> [Doc ann]
-wned (NED n e d) = [tag "north" [pretty $ show n]
+wned :: NED -> Doc ann
+wned (NED n e d) = vtag "ned" [tag "north" [pretty $ show n]
   , tag "east" [pretty $ show e], tag "down" [pretty $ show d]]
 
 bgn :: String -> Doc ann

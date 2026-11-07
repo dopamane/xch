@@ -38,11 +38,19 @@ parseXDat :: Parser XDat
 parseXDat = asum
   [ parserOptionGroup "state vector data" $ SVDat <$>
     strOption (long "state" <> metavar "STR" <> help "identifier") <*>
-    many (asum [fmap Time $ option auto $ long "time" <>
-      help "POSIX time e.g. $(echo \"$(date +s%.%N)s\""])
+    (many . asum)
+      [ fmap Time $ option auto $ long "time" <>
+        help "POSIX time e.g. $(echo \"$(date +s%.%N)s\""
+      , Pos <$> parseNED "pos", Vel <$> parseNED "vel"]
   , parserOptionGroup "communication health status" $ ComStat <$> asum
     [ flag' Excelnt $ long "excelnt" <> help "excellent connection"
     , flag' Good $ long "good" <> help "good connection"
     , flag' Poor $ long "poor" <> help "poor connection"
     , flag' Lost $ long "lost" <> help "lost connection"
     ]]
+
+parseNED :: String -> Parser NED
+parseNED pfx = NED
+  <$> option auto (long (pfx ++ "-north") <> metavar "DBL" <> help "north coordinate")
+  <*> option auto (long (pfx ++ "-east") <> metavar "DBL" <> help "east coordinate")
+  <*> option auto (long (pfx ++ "-down") <> metavar "DBL" <> help "down coordinate")
