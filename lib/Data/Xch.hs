@@ -2,25 +2,25 @@
 module Data.Xch (Xch, wxch, XDat(..), SVDat(..), ComStat(..)
   , AEInfo(..), Cord(..)) where
 
-import Data.List
 import Data.Time.Clock.POSIX
+import Prettyprinter
 
 -- | exchange
 type Xch = [XDat]
 
 -- | write exchange data in XML format
-wxch :: Xch -> String
+wxch :: Xch -> Doc ann
 wxch = vtag "xch" . map wxdat
 
 -- | space data
 data XDat = SVDat String [SVDat] | MsnEvt [String] | ComStat ComStat | AEDat [AEInfo]
 
-wxdat :: XDat -> String
+wxdat :: XDat -> Doc ann
 wxdat xdat = case xdat of
-  SVDat ident sv -> vtag "svdat" $ tag "state" ident : map wsvdat sv
-  MsnEvt{} -> ""
-  ComStat s -> tag "com" $ wcomstat s
-  AEDat{} -> ""
+  SVDat ident sv -> vtag "svdat" $ tag "state" [pretty ident] : map wsvdat sv
+  MsnEvt{} -> mempty
+  ComStat s -> tag "com" [wcomstat s]
+  AEDat{} -> mempty
 
 -- | State vector data
 data SVDat
@@ -31,17 +31,17 @@ data SVDat
   | -- | velocity
     Vel NED
 
-wsvdat :: SVDat -> String
+wsvdat :: SVDat -> Doc ann
 wsvdat s = case s of
-  Time t -> tag "time" $ show t
-  Pos{} -> ""
-  Vel{} -> ""
+  Time t -> tag "time" [pretty $ show t]
+  Pos{} -> mempty
+  Vel{} -> mempty
 
 -- | Communication health status
 data ComStat = Excelnt | Good | Poor | Lost
   deriving (Bounded, Enum, Eq, Read, Show)
 
-wcomstat :: ComStat -> String
+wcomstat :: ComStat -> Doc ann
 wcomstat s = tag_ $ case s of
   Excelnt -> "excellent"
   Good -> "good"
@@ -65,22 +65,19 @@ data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Double}
 data NED = NED{north :: Double, east :: Double, down :: Double}
   deriving (Eq, Read, Show)
 
-bgn :: String -> String
-bgn t = "<" ++ t ++ ">"
+bgn :: String -> Doc ann
+bgn t = pretty $ "<" ++ t ++ ">"
 
-end :: String -> String
-end t = "</" ++ t ++ ">"
+end :: String -> Doc ann
+end t = pretty $ "</" ++ t ++ ">"
 
-tag :: String -> String -> String
-tag t "" = "<" ++ t ++ "/>"
-tag t cs = bgn t ++ cs ++ end t
+tag :: String -> [Doc ann] -> Doc ann
+tag t [] = pretty $ "<" ++ t ++ "/>"
+tag t cs = bgn t <> hcat cs <> end t
 
-tag_ :: String -> String
-tag_ t = tag t ""
+tag_ :: String -> Doc ann
+tag_ t = tag t []
 
-nls :: [String] -> String
-nls = intercalate "\n"
-
-vtag :: String -> [String] -> String
+vtag :: String -> [Doc ann] -> Doc ann
 vtag t [] = tag_ t
-vtag t ts = nls [bgn t, nls $ ("  " ++) <$> ts, end t]
+vtag t ts = vsep [bgn t, vsep $ indent 2 <$> ts, end t]
