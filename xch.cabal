@@ -25,6 +25,7 @@ library
   exposed-modules:  Data.Xch
   build-depends:
     base < 5,
+    megaparsec,
     prettyprinter,
     time
 

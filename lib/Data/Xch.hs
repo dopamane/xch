@@ -3,6 +3,10 @@ module Data.Xch (Xch, wxch, XDat(..), SVDat(..), ComStat(..)
   , AEInfo(..), Cord(..), NED(..)) where
 
 import Data.Time.Clock.POSIX
+import Data.Void
+import Text.Megaparsec
+import Text.Megaparsec.Char
+import qualified Text.Megaparsec.Char.Lexer as L
 import Prettyprinter
 
 -- | exchange
@@ -85,3 +89,26 @@ tag_ t = tag t []
 vtag :: String -> [Doc ann] -> Doc ann
 vtag t [] = tag_ t
 vtag t ts = vsep [bgn t, vsep $ indent 2 <$> ts, end t]
+
+type Parser = Parsec Void String
+
+sc :: Parser ()
+sc = L.space space1 empty $ L.skipBlockComment "<!--" "-->"
+
+lex :: Parser a -> Parser a
+lex = L.lexeme sc
+
+sym :: String -> Parser String
+sym = L.symbol sc
+
+pbgn :: String -> Parser String
+pbgn = between (sym "<") (sym ">") . sym
+
+pend :: String -> Parser String
+pend = between (sym "</") (sym ">") . sym
+
+ptag :: String -> Parser a -> Parser a
+ptag t = between (pbgn t) (pend t)
+
+ptag_ :: String -> Parser String
+ptag_ = between (sym "<") (sym "/>") . sym
