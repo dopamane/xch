@@ -2,6 +2,7 @@
 module Data.Xch (Xch, wxch, XDat(..), SVDat(..), ComStat(..)
   , AEInfo(..), Cord(..), NED(..)) where
 
+import Data.Functor
 import Data.Time.Clock.POSIX
 import Data.Void
 import Text.Megaparsec
@@ -51,6 +52,10 @@ wcomstat s = tag_ $ case s of
   Good -> "good"
   Poor -> "poor"
   Lost -> "lost"
+
+pcomstat :: Parser ComStat
+pcomstat = choice [try $ ptag_ "excellent" $> Excelnt, try $ ptag_ "good" $> Good
+  , try $ ptag_ "poor" $> Poor, ptag_ "lost" $> Lost]
 
 -- | Anomaly and emergency info
 data AEInfo = Ident String
