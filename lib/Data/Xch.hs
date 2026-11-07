@@ -34,8 +34,8 @@ data SVDat
 wsvdat :: SVDat -> Doc ann
 wsvdat s = case s of
   Time t -> tag "time" [pretty $ show t]
-  Pos{} -> mempty
-  Vel{} -> mempty
+  Pos ned -> vtag "pos" $ wned ned
+  Vel ned -> vtag "vel" $ wned ned
 
 -- | Communication health status
 data ComStat = Excelnt | Good | Poor | Lost
@@ -64,6 +64,10 @@ data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Double}
 -- | coordinate: north, east, down
 data NED = NED{north :: Double, east :: Double, down :: Double}
   deriving (Eq, Read, Show)
+
+wned :: NED -> [Doc ann]
+wned (NED n e d) = [tag "north" [pretty $ show n]
+  , tag "east" [pretty $ show e], tag "down" [pretty $ show d]]
 
 bgn :: String -> Doc ann
 bgn t = pretty $ "<" ++ t ++ ">"

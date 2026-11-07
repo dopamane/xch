@@ -38,7 +38,8 @@ parseXDat :: Parser XDat
 parseXDat = asum
   [ parserOptionGroup "state vector data" $ SVDat <$>
     strOption (long "state" <> metavar "STR" <> help "identifier") <*>
-    many (asum [])
+    many (asum [fmap Time $ option auto $ long "time" <>
+      help "POSIX time e.g. $(echo \"$(date +s%.%N)s\""])
   , parserOptionGroup "communication health status" $ ComStat <$> asum
     [ flag' Excelnt $ long "excelnt" <> help "excellent connection"
     , flag' Good $ long "good" <> help "good connection"
