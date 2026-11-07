@@ -38,6 +38,7 @@ executable xch
   autogen-modules:  Paths_xch
   build-depends:
     base < 5,
+    megaparsec,
     optparse-applicative,
     xch,
 

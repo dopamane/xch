@@ -4,12 +4,15 @@ import Data.Version
 import Data.Xch
 import Options.Applicative
 import Paths_xch
+import qualified Text.Megaparsec as M
 
 main :: IO ()
 main = do
   cli <- customExecParser prefs' $ pinfo $ showVersion version
   case cli of
-    ReadXch{} -> error "not implemented"
+    ReadXch fM -> do
+      i <- maybe getContents readFile fM
+      putStrLn $ either M.errorBundlePretty show $ M.parse pxch "" i
     WriteXch xch fM -> maybe putStrLn writeFile fM $ show $ wxch xch
 
 prefs' :: ParserPrefs
@@ -43,9 +46,9 @@ parseXDat = asum
         help "POSIX time e.g. $(echo \"$(date +s%.%N)s\""
       , Pos <$> parseNED "pos", Vel <$> parseNED "vel"]
   , parserOptionGroup "communication health status" $ ComStat <$> asum
-    [ flag' Excelnt $ long "excelnt" <> help "excellent connection"
+    [ flag' Excelnt $ long "excellent" <> help "excellent connection"
     , flag' Good $ long "good" <> help "good connection"
-    , flag' Poor $ long "poor" <> help "poor connection"
+    , flag' Bad $ long "bad" <> help "bad connection"
     , flag' Lost $ long "lost" <> help "lost connection"
     ]]
 

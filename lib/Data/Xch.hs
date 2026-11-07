@@ -1,5 +1,5 @@
 -- | Standard Guidance for Space Data Exchange
-module Data.Xch (Xch, wxch, XDat(..), SVDat(..), ComStat(..)
+module Data.Xch (Xch, wxch, pxch, XDat(..), SVDat(..), ComStat(..)
   , AEInfo(..), Cord(..), NED(..)) where
 
 import Data.Functor
@@ -17,8 +17,13 @@ type Xch = [XDat]
 wxch :: Xch -> Doc ann
 wxch = vtag "xch" . map wxdat
 
+-- | parse exchange XML data
+pxch :: Parser Xch
+pxch = try (ptag_ "xch" $> []) <|> ptag "xch" (many pxdat)
+
 -- | space data
 data XDat = SVDat String [SVDat] | MsnEvt [String] | ComStat ComStat | AEDat [AEInfo]
+  deriving (Eq, Read, Show)
 
 wxdat :: XDat -> Doc ann
 wxdat xdat = case xdat of
@@ -26,6 +31,9 @@ wxdat xdat = case xdat of
   MsnEvt{} -> mempty
   ComStat s -> tag "com" [wcomstat s]
   AEDat{} -> mempty
+
+pxdat :: Parser XDat
+pxdat = choice [try $ ComStat <$> ptag "com" pcomstat]
 
 -- | State vector data
 data SVDat
@@ -35,6 +43,7 @@ data SVDat
     Pos NED
   | -- | velocity
     Vel NED
+  deriving (Eq, Read, Show)
 
 wsvdat :: SVDat -> Doc ann
 wsvdat s = case s of
@@ -43,19 +52,19 @@ wsvdat s = case s of
   Vel ned -> vtag "vel" [wned ned]
 
 -- | Communication health status
-data ComStat = Excelnt | Good | Poor | Lost
+data ComStat = Excelnt | Good | Bad | Lost
   deriving (Bounded, Enum, Eq, Read, Show)
 
 wcomstat :: ComStat -> Doc ann
 wcomstat s = tag_ $ case s of
   Excelnt -> "excellent"
   Good -> "good"
-  Poor -> "poor"
+  Bad -> "bad"
   Lost -> "lost"
 
 pcomstat :: Parser ComStat
 pcomstat = choice [try $ ptag_ "excellent" $> Excelnt, try $ ptag_ "good" $> Good
-  , try $ ptag_ "poor" $> Poor, ptag_ "lost" $> Lost]
+  , try $ ptag_ "bad" $> Bad, ptag_ "lost" $> Lost]
 
 -- | Anomaly and emergency info
 data AEInfo = Ident String
@@ -65,6 +74,7 @@ data AEInfo = Ident String
     LocGeo [(Cord, Cord)] (Maybe Integer)
   | -- | definition of anomaly
     Dfn String
+  deriving (Eq, Read, Show)
 
 -- | coordinate: degrees, minutes, seconds
 data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Double}
