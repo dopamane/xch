@@ -1,10 +1,20 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Standard Guidance for Space Data Exchange
-module Data.Xch (Xch, XDat(..), SVDat(..), ComStat(..), AEInfo(..), Cord(..)) where
+module Data.Xch (Xch, writeXch, XDat(..), SVDat(..), ComStat(..)
+  , AEInfo(..), Cord(..)) where
 
 import Data.Time.Clock.POSIX
+import Prettyprinter
 
 -- | exchange
 type Xch = [XDat]
+
+-- | render exchange data in XML format
+writeXch :: Xch -> String
+writeXch _ = show $ vsep
+  [ "<xch>"
+  , "</xch>"]
 
 -- | space data
 data XDat = SVDat [SVDat] | MsnEvt [String] | ComStat ComStat | AEDat [AEInfo]

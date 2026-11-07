@@ -10,7 +10,7 @@ main = do
   cli <- customExecParser prefs' $ pinfo $ showVersion version
   case cli of
     ReadXch{} -> error "not implemented"
-    WriteXch{} -> error "not implemented"
+    WriteXch xch fM -> maybe putStrLn writeFile fM $ writeXch xch
 
 prefs' :: ParserPrefs
 prefs' = prefs $ showHelpOnError <> showHelpOnEmpty
@@ -36,7 +36,7 @@ fileArg h = strArgument $ metavar "FILE" <> completer (bashCompleter "file") <> 
 
 parseXDat :: Parser XDat
 parseXDat = parserOptionGroup "communication health status" $ ComStat <$> asum
-  [ flag' Excelnt $ long "excelnt" <> help "excellent connection, default"
+  [ flag' Excelnt $ long "excelnt" <> help "excellent connection"
   , flag' Good $ long "good" <> help "good connection"
   , flag' Poor $ long "poor" <> help "poor connection"
   , flag' Lost $ long "lost" <> help "lost connection"
