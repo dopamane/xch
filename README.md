@@ -1,4 +1,4 @@
-# xchange
+# XCh
 Standard Guidance for Space Data Exchange
 
 Development

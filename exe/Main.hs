@@ -3,7 +3,7 @@ module Main (main) where
 import Data.Version
 import Data.Xch
 import Options.Applicative
-import Paths_xchange
+import Paths_xch
 
 main :: IO ()
 main = do
