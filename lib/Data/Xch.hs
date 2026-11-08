@@ -23,19 +23,21 @@ pxch :: Parser Xch
 pxch = try (ptag_ "xch" $> []) <|> ptag "xch" (many pxdat)
 
 -- | space data
-data XDat = SVDat String [SVDat] | MsnEvt [String] | ComStat ComStat | AEDat [AEInfo]
+data XDat = SVDat String [SVDat] | MsnEvt String [String] | ComStat ComStat
+  | AEDat [AEInfo]
   deriving (Eq, Read, Show)
 
 wxdat :: XDat -> Doc ann
 wxdat xdat = case xdat of
-  SVDat ident sv -> vtag "svdat" $ tag "state" [pretty ident] : map wsvdat sv
-  MsnEvt{} -> mempty
+  SVDat stte sv -> vtag "svdat" $ tag "state" [pretty stte] : map wsvdat sv
+  MsnEvt trig es -> vtag "misn" $ tag "trig" [pretty trig] : [tag "evt" [pretty e] | e <- es]
   ComStat s -> tag "com" [wcomstat s]
   AEDat{} -> mempty
 
 pxdat :: Parser XDat
-pxdat = choice [try $ ptag "svdat" $ SVDat <$> ptag "state" pstr
-  <*> many psvdat, try $ ComStat <$> ptag "com" pcomstat]
+pxdat = choice [try $ ptag "svdat" $ SVDat <$> ptag "state" pstr <*> many psvdat
+  , try $ ptag "misn" $ MsnEvt <$> ptag "trig" pstr <*> many (try $ ptag "evt" pstr)
+  , try $ ComStat <$> ptag "com" pcomstat]
 
 -- | State vector data
 data SVDat
@@ -79,11 +81,11 @@ wcomstat s = tag_ $ case s of
 
 pcomstat :: Parser ComStat
 pcomstat = choice [try $ ptag_ "excellent" $> Excelnt, try $ ptag_ "good" $> Good
-  , try $ ptag_ "bad" $> Bad, ptag_ "lost" $> Lost]
+  , try $ ptag_ "bad" $> Bad, try $ ptag_ "lost" $> Lost]
 
 -- | Anomaly and emergency info
-data AEInfo = Ident String
-  | -- | activation time and duration
+data AEInfo
+  = -- | activation time and duration
     ActDurTime Integer Integer
   | -- | location\/geometry: bounds @(lat,lon)@ and altitude
     LocGeo [(Cord, Cord)] (Maybe Integer)

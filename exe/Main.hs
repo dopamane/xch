@@ -45,6 +45,9 @@ parseXDat = asum
       [ fmap Time $ option auto $ long "time" <>
         help "POSIX time e.g. $(echo \"$(date +%s.%N)s\")"
       , Pos <$> parseNED "pos", Vel <$> parseNED "vel"]
+  , parserOptionGroup "mission event triggers" $ MsnEvt <$>
+    strOption (long "trig" <> metavar "STR" <> help "trigger") <*>
+    many (strOption $ long "evt" <> metavar "STR" <> help "event")
   , parserOptionGroup "communication health status" $ ComStat <$> asum
     [ flag' Excelnt $ long "excellent" <> help "excellent connection"
     , flag' Good $ long "good" <> help "good connection"
