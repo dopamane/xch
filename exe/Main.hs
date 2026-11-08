@@ -43,7 +43,7 @@ parseXDat = asum
     strOption (long "state" <> metavar "STR" <> help "identifier") <*>
     (many . asum)
       [ fmap Time $ option auto $ long "time" <>
-        help "POSIX time e.g. $(echo \"$(date +s%.%N)s\""
+        help "POSIX time e.g. $(echo \"$(date +%s.%N)s\")"
       , Pos <$> parseNED "pos", Vel <$> parseNED "vel"]
   , parserOptionGroup "communication health status" $ ComStat <$> asum
     [ flag' Excelnt $ long "excellent" <> help "excellent connection"

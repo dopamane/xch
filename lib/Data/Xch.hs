@@ -8,6 +8,7 @@ import Data.Void
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
+import Text.Read hiding (choice)
 import Prettyprinter
 
 -- | exchange
@@ -33,7 +34,8 @@ wxdat xdat = case xdat of
   AEDat{} -> mempty
 
 pxdat :: Parser XDat
-pxdat = choice [try $ ComStat <$> ptag "com" pcomstat]
+pxdat = choice [try $ ptag "svdat" $ SVDat <$> ptag "state" pstr
+  <*> many psvdat, try $ ComStat <$> ptag "com" pcomstat]
 
 -- | State vector data
 data SVDat
@@ -50,6 +52,19 @@ wsvdat s = case s of
   Time t -> tag "time" [pretty $ show t]
   Pos ned -> vtag "pos" [wned ned]
   Vel ned -> vtag "vel" [wned ned]
+
+psvdat :: Parser SVDat
+psvdat = choice
+  [ try $ ptag "time" $ Time <$> ptime, try $ ptag "pos" $ Pos <$> pned
+  , try $ ptag "vel" $ Vel <$> pned]
+
+ptime :: Parser POSIXTime
+ptime = do
+  ts <- some digitChar
+  p  <- sym "."
+  ns <- some digitChar
+  s  <- sym "s"
+  either fail return $ readEither $ ts ++ p ++ ns ++ s
 
 -- | Communication health status
 data ComStat = Excelnt | Good | Bad | Lost
@@ -134,3 +149,6 @@ ptag_ = between (sym "<") (sym "/>") . sym
 
 pdbl :: Parser Double
 pdbl = L.signed sc $ lexe L.float
+
+pstr :: Parser String
+pstr = lexe $ many $ anySingleBut '<'
