@@ -88,6 +88,10 @@ wned :: NED -> Doc ann
 wned (NED n e d) = vtag "ned" [tag "north" [pretty $ show n]
   , tag "east" [pretty $ show e], tag "down" [pretty $ show d]]
 
+pned :: Parser NED
+pned = ptag "ned" $ NED <$> ptag "north" pdbl <*> ptag "east" pdbl
+  <*> ptag "down" pdbl
+
 bgn :: String -> Doc ann
 bgn t = pretty $ "<" ++ t ++ ">"
 
@@ -110,8 +114,8 @@ type Parser = Parsec Void String
 sc :: Parser ()
 sc = L.space space1 empty $ L.skipBlockComment "<!--" "-->"
 
-lex :: Parser a -> Parser a
-lex = L.lexeme sc
+lexe :: Parser a -> Parser a
+lexe = L.lexeme sc
 
 sym :: String -> Parser String
 sym = L.symbol sc
@@ -127,3 +131,6 @@ ptag t = between (pbgn t) (pend t)
 
 ptag_ :: String -> Parser String
 ptag_ = between (sym "<") (sym "/>") . sym
+
+pdbl :: Parser Double
+pdbl = L.signed sc $ lexe L.float
