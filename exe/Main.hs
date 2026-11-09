@@ -53,7 +53,24 @@ parseXDat = asum
     , flag' Good $ long "good" <> help "good connection"
     , flag' Bad $ long "bad" <> help "bad connection"
     , flag' Lost $ long "lost" <> help "lost connection"
-    ]]
+    ]
+  , parserOptionGroup "anomaly/emergency data" $ AEDat
+    <$> strOption (long "ae" <> metavar "STR" <> help "anomaly/emergency identifier")
+    <*> (many . asum)
+    [ ActDurTime <$> option auto (long "act" <> metavar "INT" <> help "activate time mins")
+      <*> option auto (long "dur" <> metavar "INT" <> help "duration time mins")
+    , LocGeo <$> strOption (long "geo" <> metavar "STR" <> help "geographic descriptor")
+      <*> many ((,) <$> parseCord "lat" <*> parseCord "lon")
+      <*> optional (option auto $ long "alt" <> metavar "INT" <> help "altitude")
+    , Dfn <$> strOption (long "dfn" <> metavar "STR" <> help "definition")
+    ]
+  ]
+
+parseCord :: String -> Parser Cord
+parseCord pfx = Cord
+  <$> option auto (long (pfx ++ "d") <> metavar "INT" <> help (pfx ++ " coordinate degrees"))
+  <*> option auto (long (pfx ++ "m") <> metavar "INT" <> help (pfx ++ " coordinate minutes"))
+  <*> option auto (long (pfx ++ "s") <> metavar "DBL" <> help (pfx ++ " coordinate seconds"))
 
 parseNED :: String -> Parser NED
 parseNED pfx = NED

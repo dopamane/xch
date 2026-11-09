@@ -87,8 +87,8 @@ pcomstat = choice [try $ ptag_ "excellent" $> Excelnt, try $ ptag_ "good" $> Goo
 data AEInfo
   = -- | activation time and duration
     ActDurTime Integer Integer
-  | -- | location\/geometry: bounds @(lat,lon)@ and altitude
-    LocGeo [(Cord, Cord)] (Maybe Integer)
+  | -- | location\/geometry: name, bounds @(lat,lon)@ and altitude
+    LocGeo String [(Cord, Cord)] (Maybe Integer)
   | -- | definition of anomaly
     Dfn String
   deriving (Eq, Read, Show)
@@ -96,9 +96,10 @@ data AEInfo
 waeinf :: AEInfo -> Doc ann
 waeinf ae = case ae of
   ActDurTime t d -> vtag "actdur" [tag "act" [pretty t], tag "dur" [pretty d]]
-  LocGeo cs altM -> vtag "loc" $
-    [vtag "geo" [tag "lat" [wcord lat], tag "lon" [wcord lon]] | (lat, lon) <- cs] ++
-    maybe [] (pure . tag "alt" . pure . pretty)  altM
+  LocGeo idnt cs altM -> vtag "loc" $ concat
+    [ [tag "geo" [pretty idnt]]
+    , concat [[vtag "lat" [wcord lat], vtag "lon" [wcord lon]] | (lat, lon) <- cs]
+    , maybe [] (pure . tag "alt" . pure . pretty) altM]
   Dfn d -> tag "dfn" [pretty d]
 
 -- | coordinate: degrees, minutes, seconds
