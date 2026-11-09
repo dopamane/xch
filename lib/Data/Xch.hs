@@ -102,6 +102,13 @@ waeinf ae = case ae of
     , maybe [] (pure . tag "alt" . pure . pretty) altM]
   Dfn d -> tag "dfn" [pretty d]
 
+paeinf :: Parser AEInfo
+paeinf = choice
+  [ try $ ptag "actdur" $ ActDurTime <$> ptag "act" pint <*> ptag "dur" pint
+  , try $ ptag "loc" $ LocGeo <$> ptag "geo" pstr <*> many undefined
+    <*> optional (ptag "alt" pint)
+  ]
+
 -- | coordinate: degrees, minutes, seconds
 data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Double}
   deriving (Eq, Read, Show)
@@ -109,6 +116,10 @@ data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Double}
 wcord :: Cord -> Doc ann
 wcord (Cord d m s) = vtag "cord" [tag "dgs" [pretty d], tag "mns" [pretty m]
   , tag "sds" [pretty s]]
+
+pcord :: Parser Cord
+pcord = ptag "cord" $ Cord <$> ptag "dgs" pint <*> ptag "mns" pint
+  <*> ptag "sds" pdbl
 
 -- | coordinate: north, east, down
 data NED = NED{north :: Double, east :: Double, down :: Double}
@@ -164,6 +175,9 @@ ptag_ = between (sym "<") (sym "/>") . sym
 
 pdbl :: Parser Double
 pdbl = L.signed sc $ lexe L.float
+
+pint :: Parser Integer
+pint = L.signed sc $ lexe L.decimal
 
 pstr :: Parser String
 pstr = lexe $ many $ anySingleBut '<'
