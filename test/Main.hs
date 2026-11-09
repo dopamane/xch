@@ -19,6 +19,8 @@ testSVDat = testCase "SVDat" $ do
   parseMaybe pxch "<xch><svdat><state>foo</state></svdat></xch>" @?= Just [SVDat "foo" []]
   parseMaybe pxch "<xch><svdat><state>foo bar</state></svdat></xch>" @?= Just [SVDat "foo bar" []]
   parseMaybe pxch "<xch><svdat><state>\\<escape</state></svdat></xch>" @?= Just [SVDat "<escape" []]
+  parseMaybe pxch "<xch><svdat><state>foo</state><time>1794828361.374233416s</time></svdat></xch>"
+    @?= Just [SVDat "foo" [Time $ read "1794828361.374233416s"]]
 
 testComStat :: TestTree
 testComStat = testCase "ComStat" $ do
