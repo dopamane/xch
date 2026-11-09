@@ -24,7 +24,7 @@ pxch = try (ptag_ "xch" $> []) <|> ptag "xch" (many pxdat)
 
 -- | space data
 data XDat = SVDat String [SVDat] | MsnEvt String [String] | ComStat ComStat
-  | AEDat [AEInfo]
+  | AEDat String [AEInfo]
   deriving (Eq, Read, Show)
 
 wxdat :: XDat -> Doc ann
@@ -32,7 +32,7 @@ wxdat xdat = case xdat of
   SVDat stte sv -> vtag "svdat" $ tag "state" [pretty stte] : map wsvdat sv
   MsnEvt trig es -> vtag "misn" $ tag "trig" [pretty trig] : [tag "evt" [pretty e] | e <- es]
   ComStat s -> tag "com" [wcomstat s]
-  AEDat{} -> mempty
+  AEDat idnt inf -> vtag "aedat" $ tag "ae" [pretty idnt] : map waeinf inf
 
 pxdat :: Parser XDat
 pxdat = choice [try $ ptag "svdat" $ SVDat <$> ptag "state" pstr <*> many psvdat
@@ -93,9 +93,21 @@ data AEInfo
     Dfn String
   deriving (Eq, Read, Show)
 
+waeinf :: AEInfo -> Doc ann
+waeinf ae = case ae of
+  ActDurTime t d -> vtag "actdur" [tag "act" [pretty t], tag "dur" [pretty d]]
+  LocGeo cs altM -> vtag "loc" $
+    [vtag "geo" [tag "lat" [wcord lat], tag "lon" [wcord lon]] | (lat, lon) <- cs] ++
+    maybe [] (pure . tag "alt" . pure . pretty)  altM
+  Dfn d -> tag "dfn" [pretty d]
+
 -- | coordinate: degrees, minutes, seconds
 data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Double}
   deriving (Eq, Read, Show)
+
+wcord :: Cord -> Doc ann
+wcord (Cord d m s) = vtag "cord" [tag "dgs" [pretty d], tag "mns" [pretty m]
+  , tag "sds" [pretty s]]
 
 -- | coordinate: north, east, down
 data NED = NED{north :: Double, east :: Double, down :: Double}
