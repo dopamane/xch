@@ -37,7 +37,8 @@ wxdat xdat = case xdat of
 pxdat :: Parser XDat
 pxdat = choice [try $ ptag "svdat" $ SVDat <$> ptag "state" pstr <*> many psvdat
   , try $ ptag "misn" $ MsnEvt <$> ptag "trig" pstr <*> many (try $ ptag "evt" pstr)
-  , try $ ComStat <$> ptag "com" pcomstat]
+  , try $ ComStat <$> ptag "com" pcomstat
+  , try $ ptag "aedat" $ AEDat <$> ptag "ae" pstr <*> many paeinf]
 
 -- | State vector data
 data SVDat
@@ -105,8 +106,10 @@ waeinf ae = case ae of
 paeinf :: Parser AEInfo
 paeinf = choice
   [ try $ ptag "actdur" $ ActDurTime <$> ptag "act" pint <*> ptag "dur" pint
-  , try $ ptag "loc" $ LocGeo <$> ptag "geo" pstr <*> many undefined
-    <*> optional (ptag "alt" pint)
+  , try $ ptag "loc" $ LocGeo <$> ptag "geo" pstr
+    <*> many (try $ (,) <$> ptag "lat" pcord <*> ptag "lon" pcord)
+    <*> optional (try $ ptag "alt" pint)
+  , try $ Dfn <$> ptag "dfn" pstr
   ]
 
 -- | coordinate: degrees, minutes, seconds
