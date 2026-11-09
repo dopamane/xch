@@ -7,12 +7,18 @@ import Test.Tasty.HUnit
 
 main :: IO ()
 main = defaultMain $ testGroup "Test.Xch"
-  [testEmpty, testComStat]
+  [testEmpty, testSVDat, testComStat]
 
 testEmpty :: TestTree
 testEmpty = testCase "empty" $ do
   parseMaybe pxch "<xch/>" @?= Just []
   parseMaybe pxch "<xch></xch>" @?= Just []
+
+testSVDat :: TestTree
+testSVDat = testCase "SVDat" $ do
+  parseMaybe pxch "<xch><svdat><state>foo</state></svdat></xch>" @?= Just [SVDat "foo" []]
+  parseMaybe pxch "<xch><svdat><state>foo bar</state></svdat></xch>" @?= Just [SVDat "foo bar" []]
+  parseMaybe pxch "<xch><svdat><state>\\<escape</state></svdat></xch>" @?= Just [SVDat "<escape" []]
 
 testComStat :: TestTree
 testComStat = testCase "ComStat" $ do

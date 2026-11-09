@@ -183,4 +183,4 @@ pint :: Parser Integer
 pint = L.signed sc $ lexe L.decimal
 
 pstr :: Parser String
-pstr = lexe $ many $ anySingleBut '<'
+pstr = lexe $ many $ try (sym "\\<" $> '<') <|> anySingleBut '<'
