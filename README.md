@@ -14,5 +14,6 @@ Development
 
 ```
 cabal build
+cabal test
 cabal run xch -- --help
 ```
