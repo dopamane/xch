@@ -177,7 +177,7 @@ ptag_ :: String -> Parser String
 ptag_ = between (sym "<") (sym "/>") . sym
 
 pdbl :: Parser Double
-pdbl = L.signed sc $ lexe L.float
+pdbl = try (L.signed sc $ lexe L.float) <|> L.signed sc (lexe L.decimal)
 
 pint :: Parser Integer
 pint = L.signed sc $ lexe L.decimal
