@@ -50,7 +50,9 @@ test-suite test
   main-is:          Main.hs
   build-depends:
     base < 5,
+    hedgehog,
     megaparsec,
     tasty,
+    tasty-hedgehog,
     tasty-hunit,
     xch

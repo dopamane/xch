@@ -1,13 +1,17 @@
 module Main (main) where
 
 import Data.Xch
+import Hedgehog
+import qualified Hedgehog.Gen as Gen
+import qualified Hedgehog.Range as Range
 import Text.Megaparsec
 import Test.Tasty
 import Test.Tasty.HUnit
+import Test.Tasty.Hedgehog
 
 main :: IO ()
 main = defaultMain $ testGroup "Test.Xch"
-  [testEmpty, testSVDat, testMsnEvt, testComStat, testAEDat]
+  [testEmpty, testSVDat, testMsnEvt, testComStat, testAEDat, ptrip]
 
 testEmpty :: TestTree
 testEmpty = testCase "empty" $ do
@@ -75,3 +79,38 @@ ptest :: String -> Xch -> Assertion
 ptest i expt = case parse pxch "" i of
   Left  err -> assertFailure $ errorBundlePretty err
   Right act -> act @?= expt
+
+ptrip :: TestTree
+ptrip = testProperty "Trip" $ property $ do
+  x <- forAll gxch
+  tripping x (show . wxch) (parse pxch "")
+
+gxch :: MonadGen m => m Xch
+gxch = glist gxdat
+
+gxdat :: MonadGen m => m XDat
+gxdat = Gen.choice
+  [ MsnEvt <$> gstr <*> glist gstr
+  , ComStat <$> Gen.element [Excelnt, Good, Bad, Lost]
+  ]
+
+gint :: MonadGen m => m Integer
+gint = Gen.integral_ $ Range.linearFrom 0 (-999999999999999) 999999999999999
+
+gdbl :: MonadGen m => m Double
+gdbl = Gen.double $ Range.linearFracFrom 0 (-999999999999999) 999999999999999
+
+gstr :: MonadGen m => m String
+gstr = esc <$> Gen.string rangeList Gen.alphaNum
+  where
+    esc [] = []
+    esc ('\\':'<':rest) = "\\<" ++ esc rest
+    esc (c:'<':rest) = [c] ++ "\\<" ++ esc rest
+    esc ('<':rest) = "\\<" ++ esc rest
+    esc (c:rest) = c : esc rest
+
+glist :: MonadGen m => m a -> m [a]
+glist = Gen.list rangeList
+
+rangeList :: Range Int
+rangeList = Range.linearFrom 0 0 256
