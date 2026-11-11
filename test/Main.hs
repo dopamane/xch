@@ -7,7 +7,7 @@ import Test.Tasty.HUnit
 
 main :: IO ()
 main = defaultMain $ testGroup "Test.Xch"
-  [testEmpty, testSVDat, testMsnEvt, testComStat]
+  [testEmpty, testSVDat, testMsnEvt, testComStat, testAEDat]
 
 testEmpty :: TestTree
 testEmpty = testCase "empty" $ do
@@ -55,6 +55,21 @@ testComStat = testCase "ComStat" $ do
   ptest "<xch><com><good/></com></xch>" [ComStat Good]
   ptest "<xch><com><bad/></com></xch>" [ComStat Bad]
   ptest "<xch><com><lost/></com></xch>" [ComStat Lost]
+
+testAEDat :: TestTree
+testAEDat = testCase "AEDat" $ do
+  ptest "<xch><aedat><ae>foo</ae></aedat></xch>" [AEDat "foo" []]
+  ptest "<xch><aedat><ae>bar</ae><actdur><act>4</act><dur>5</dur></actdur></aedat></xch>"
+    [AEDat "bar" [ActDurTime 4 5]]
+  ptest "<xch><aedat><ae>baz</ae><dfn>zoo</dfn></aedat></xch>"
+    [AEDat "baz" [Dfn "zoo"]]
+  ptest "<xch><aedat><ae>bar</ae>\
+    \<loc><geo>San Diego</geo>\
+    \  <lat><cord><dgs>34</dgs><mns>-2</mns><sds>3.14</sds></cord></lat>\
+    \  <lon><cord><dgs>0</dgs><mns>55</mns><sds>1.0001</sds></cord></lon>\
+    \  <alt>45</alt>\
+    \</loc></aedat></xch>"
+    [AEDat "bar" [LocGeo "San Diego" [(Cord 34 (-2) 3.14, Cord 0 55 1.0001)] $ Just 45]]
 
 ptest :: String -> Xch -> Assertion
 ptest i expt = case parse pxch "" i of
