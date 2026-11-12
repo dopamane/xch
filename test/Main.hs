@@ -101,7 +101,7 @@ gdbl :: MonadGen m => m Double
 gdbl = Gen.double $ Range.linearFracFrom 0 (-999999999999999) 999999999999999
 
 gstr :: MonadGen m => m String
-gstr = Gen.string rangeList Gen.alphaNum
+gstr = Gen.string rangeList Gen.unicode
 
 glist :: MonadGen m => m a -> m [a]
 glist = Gen.list rangeList

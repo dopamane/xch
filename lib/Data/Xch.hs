@@ -202,4 +202,4 @@ pint :: Parser Integer
 pint = L.signed sc $ lexe L.decimal
 
 pstag :: String -> Parser String
-pstag t = sym "<" *> sym t *> char '>' *> manyTill L.charLiteral (pend t)
+pstag t = sym "<" *> sym t *> char '>' *> manyTill anySingle (pend t)
