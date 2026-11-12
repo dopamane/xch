@@ -29,14 +29,14 @@ data XDat = SVDat String [SVDat] | MsnEvt String [String] | ComStat ComStat
   deriving (Eq, Read, Show)
 
 wxdat :: XDat -> String
-wxdat xdat = case xdat of
-  SVDat stte sv -> unlines $ [bgn "svdat", tag "state" stte] ++ map wsvdat sv ++ [end "svdat"]
-  MsnEvt trig es -> intercalate "\n" $
-    ["  " ++ bgn "misn", "    " ++ tag "trig" trig] ++
-      map (mappend "    " . tag "evt") es ++ ["  " ++ end "misn"]
-  ComStat s -> intercalate "\n" ["  " ++ bgn "com", wcomstat s, "  " ++ end "com"]
-  AEDat idnt inf -> unlines $
-    [ bgn "aedat", tag "ae" idnt] ++ map waeinf inf ++ [end "aedat"]
+wxdat xdat = intercalate "\n" $ case xdat of
+  SVDat stte sv -> [lvl 2 ++ bgn "svdat", lvl 4 ++ stag "state" stte] ++
+    map wsvdat sv ++ [lvl 2 ++ end "svdat"]
+  MsnEvt trig es -> [lvl 2 ++ bgn "misn", lvl 4 ++ stag "trig" trig] ++
+    [lvl 4 ++ stag "evt" e | e <- es] ++ [lvl 2 ++ end "misn"]
+  ComStat s -> [lvl 2 ++ bgn "com", wcomstat s, lvl 2 ++ end "com"]
+  AEDat idnt inf -> [lvl 2 ++ bgn "aedat", lvl 4 ++ stag "ae" idnt] ++
+    map waeinf inf ++ [lvl 2 ++ end "aedat"]
 
 pxdat :: Parser XDat
 pxdat = choice [try $ ptag "svdat" $ SVDat <$> pstag "state" <*> many psvdat
@@ -152,14 +152,20 @@ pned :: Parser NED
 pned = ptag "ned" $ NED <$> ptag "north" pdbl <*> ptag "east" pdbl
   <*> ptag "down" pdbl
 
+lvl :: Int -> String
+lvl i = replicate i ' '
+
 bgn :: String -> String
 bgn t = "<" ++ t ++ ">"
 
 end :: String -> String
 end t = "</" ++ t ++ ">"
 
+stag :: String -> String -> String
+stag t s = bgn t ++ s ++ end t
+
 tag :: Show a => String -> a -> String
-tag t a  = bgn t ++ show a ++ end t
+tag t = stag t . show
 
 tag_ :: String -> String
 tag_ t = "<" ++ t ++ "/>"
