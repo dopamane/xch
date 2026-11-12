@@ -23,7 +23,7 @@ testSVDat = testCaseSteps "SVDat" $ \step -> do
   step "state"
   ptest "<xch><svdat><state>foo</state></svdat></xch>" [SVDat "foo" []]
   ptest "<xch><svdat><state>foo bar</state></svdat></xch>" [SVDat "foo bar" []]
-  ptest "<xch><svdat><state>\\<escape</state></svdat></xch>" [SVDat "<escape" []]
+  ptest "<xch><svdat><state><escape</state></svdat></xch>" [SVDat "<escape" []]
   step "time"
   ptest "<xch><svdat><state>foo</state><time>1794828361.374233416s</time></svdat></xch>"
     [SVDat "foo" [Time $ read "1794828361.374233416s"]]
@@ -101,13 +101,7 @@ gdbl :: MonadGen m => m Double
 gdbl = Gen.double $ Range.linearFracFrom 0 (-999999999999999) 999999999999999
 
 gstr :: MonadGen m => m String
-gstr = esc <$> Gen.string rangeList Gen.alphaNum
-  where
-    esc [] = []
-    esc ('\\':'<':rest) = "\\<" ++ esc rest
-    esc (c:'<':rest) = [c] ++ "\\<" ++ esc rest
-    esc ('<':rest) = "\\<" ++ esc rest
-    esc (c:rest) = c : esc rest
+gstr = Gen.string rangeList Gen.alphaNum
 
 glist :: MonadGen m => m a -> m [a]
 glist = Gen.list rangeList

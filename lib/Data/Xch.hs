@@ -30,15 +30,15 @@ data XDat = SVDat String [SVDat] | MsnEvt String [String] | ComStat ComStat
 wxdat :: XDat -> Doc ann
 wxdat xdat = case xdat of
   SVDat stte sv -> vtag "svdat" $ tag "state" [pretty stte] : map wsvdat sv
-  MsnEvt trig es -> vtag "misn" $ tag "trig" [pretty trig] : [tag "evt" [pretty e] | e <- es]
+  MsnEvt trig es -> vtag "misn" $ stag "trig" trig : [stag "evt" e | e <- es]
   ComStat s -> tag "com" [wcomstat s]
   AEDat idnt inf -> vtag "aedat" $ tag "ae" [pretty idnt] : map waeinf inf
 
 pxdat :: Parser XDat
-pxdat = choice [try $ ptag "svdat" $ SVDat <$> ptag "state" pstr <*> many psvdat
-  , try $ ptag "misn" $ MsnEvt <$> ptag "trig" pstr <*> many (try $ ptag "evt" pstr)
+pxdat = choice [try $ ptag "svdat" $ SVDat <$> pstag "state" <*> many psvdat
+  , try $ ptag "misn" $ MsnEvt <$> pstag "trig" <*> many (try $ pstag "evt")
   , try $ ComStat <$> ptag "com" pcomstat
-  , try $ ptag "aedat" $ AEDat <$> ptag "ae" pstr <*> many paeinf]
+  , try $ ptag "aedat" $ AEDat <$> pstag "ae" <*> many paeinf]
 
 -- | State vector data
 data SVDat
@@ -106,10 +106,10 @@ waeinf ae = case ae of
 paeinf :: Parser AEInfo
 paeinf = choice
   [ try $ ptag "actdur" $ ActDurTime <$> ptag "act" pint <*> ptag "dur" pint
-  , try $ ptag "loc" $ LocGeo <$> ptag "geo" pstr
+  , try $ ptag "loc" $ LocGeo <$> pstag "geo"
     <*> many (try $ (,) <$> ptag "lat" pcord <*> ptag "lon" pcord)
     <*> optional (try $ ptag "alt" pint)
-  , try $ Dfn <$> ptag "dfn" pstr
+  , try $ Dfn <$> pstag "dfn"
   ]
 
 -- | coordinate: degrees, minutes, seconds
@@ -136,22 +136,25 @@ pned :: Parser NED
 pned = ptag "ned" $ NED <$> ptag "north" pdbl <*> ptag "east" pdbl
   <*> ptag "down" pdbl
 
-bgn :: String -> Doc ann
-bgn t = pretty $ "<" ++ t ++ ">"
+bgn :: String -> String
+bgn t = "<" ++ t ++ ">"
 
-end :: String -> Doc ann
-end t = pretty $ "</" ++ t ++ ">"
+end :: String -> String
+end t = "</" ++ t ++ ">"
 
 tag :: String -> [Doc ann] -> Doc ann
 tag t [] = pretty $ "<" ++ t ++ "/>"
-tag t cs = bgn t <> hcat cs <> end t
+tag t cs = pretty (bgn t) <> hcat cs <> pretty (end t)
+
+stag :: String -> String -> Doc ann
+stag t s = pretty $ bgn t ++ s ++ end t
 
 tag_ :: String -> Doc ann
 tag_ t = tag t []
 
 vtag :: String -> [Doc ann] -> Doc ann
 vtag t [] = tag_ t
-vtag t ts = vsep [bgn t, vsep $ indent 2 <$> ts, end t]
+vtag t ts = vsep [pretty $ bgn t, vsep $ indent 2 <$> ts, pretty $ end t]
 
 type Parser = Parsec Void String
 
@@ -182,5 +185,5 @@ pdbl = try (L.signed sc $ lexe L.float) <|> L.signed sc (lexe L.decimal)
 pint :: Parser Integer
 pint = L.signed sc $ lexe L.decimal
 
-pstr :: Parser String
-pstr = lexe $ many $ try (sym "\\<" $> '<') <|> anySingleBut '<'
+pstag :: String -> Parser String
+pstag t = sym "<" *> sym t *> char '>' *> manyTill L.charLiteral (pend t)
