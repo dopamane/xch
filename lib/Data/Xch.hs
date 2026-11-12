@@ -100,7 +100,8 @@ data AEInfo
 
 waeinf :: AEInfo -> String
 waeinf ae = case ae of
-  ActDurTime t d -> unlines [bgn "actdur", tag "act" t, tag "dur" d, end "actdur"]
+  ActDurTime t d -> intercalate "\n" [lvl 4 ++ bgn "actdur", lvl 6 ++ tag "act" t
+    , lvl 6 ++ tag "dur" d, lvl 4 ++ end "actdur"]
   LocGeo idnt cs altM -> unlines
     [ bgn "loc"
     , tag "geo" idnt
