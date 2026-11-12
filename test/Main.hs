@@ -83,7 +83,7 @@ ptest i expt = case parse pxch "" i of
 ptrip :: TestTree
 ptrip = testProperty "Trip" $ property $ do
   x <- forAll gxch
-  tripping x (show . wxch) (parse pxch "")
+  tripping x wxch (parse pxch "")
 
 gxch :: MonadGen m => m Xch
 gxch = glist gxdat

@@ -3,20 +3,21 @@ module Data.Xch (Xch, wxch, pxch, XDat(..), SVDat(..), ComStat(..)
   , AEInfo(..), Cord(..), NED(..)) where
 
 import Data.Functor
+import Data.List
 import Data.Time.Clock.POSIX
 import Data.Void
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import Text.Read hiding (choice)
-import Prettyprinter
 
 -- | exchange
 type Xch = [XDat]
 
 -- | write exchange data in XML format
-wxch :: Xch -> Doc ann
-wxch = vtag "xch" . map wxdat
+wxch :: Xch -> String
+wxch [] = tag_ "xch"
+wxch xs = unlines $ [bgn "xch"] ++ map wxdat xs ++ [end "xch"]
 
 -- | parse exchange XML data
 pxch :: Parser Xch
@@ -27,12 +28,15 @@ data XDat = SVDat String [SVDat] | MsnEvt String [String] | ComStat ComStat
   | AEDat String [AEInfo]
   deriving (Eq, Read, Show)
 
-wxdat :: XDat -> Doc ann
+wxdat :: XDat -> String
 wxdat xdat = case xdat of
-  SVDat stte sv -> vtag "svdat" $ tag "state" [pretty stte] : map wsvdat sv
-  MsnEvt trig es -> vtag "misn" $ stag "trig" trig : [stag "evt" e | e <- es]
-  ComStat s -> tag "com" [wcomstat s]
-  AEDat idnt inf -> vtag "aedat" $ tag "ae" [pretty idnt] : map waeinf inf
+  SVDat stte sv -> unlines $ [bgn "svdat", tag "state" stte] ++ map wsvdat sv ++ [end "svdat"]
+  MsnEvt trig es -> intercalate "\n" $
+    ["  " ++ bgn "misn", "    " ++ tag "trig" trig] ++
+      map (mappend "    " . tag "evt") es ++ ["  " ++ end "misn"]
+  ComStat s -> intercalate "\n" ["  " ++ bgn "com", wcomstat s, "  " ++ end "com"]
+  AEDat idnt inf -> unlines $
+    [ bgn "aedat", tag "ae" idnt] ++ map waeinf inf ++ [end "aedat"]
 
 pxdat :: Parser XDat
 pxdat = choice [try $ ptag "svdat" $ SVDat <$> pstag "state" <*> many psvdat
@@ -50,11 +54,11 @@ data SVDat
     Vel NED
   deriving (Eq, Read, Show)
 
-wsvdat :: SVDat -> Doc ann
+wsvdat :: SVDat -> String
 wsvdat s = case s of
-  Time t -> tag "time" [pretty $ show t]
-  Pos ned -> vtag "pos" [wned ned]
-  Vel ned -> vtag "vel" [wned ned]
+  Time t -> tag "time" t
+  Pos ned -> unlines [bgn "pos", wned ned, end "pos"]
+  Vel ned -> unlines [bgn "vel", wned ned, end "vel"]
 
 psvdat :: Parser SVDat
 psvdat = choice
@@ -73,8 +77,8 @@ ptime = do
 data ComStat = Excelnt | Good | Bad | Lost
   deriving (Bounded, Enum, Eq, Read, Show)
 
-wcomstat :: ComStat -> Doc ann
-wcomstat s = tag_ $ case s of
+wcomstat :: ComStat -> String
+wcomstat s = mappend "    " $ tag_ $ case s of
   Excelnt -> "excellent"
   Good -> "good"
   Bad -> "bad"
@@ -94,14 +98,26 @@ data AEInfo
     Dfn String
   deriving (Eq, Read, Show)
 
-waeinf :: AEInfo -> Doc ann
+waeinf :: AEInfo -> String
 waeinf ae = case ae of
-  ActDurTime t d -> vtag "actdur" [tag "act" [pretty t], tag "dur" [pretty d]]
-  LocGeo idnt cs altM -> vtag "loc" $ concat
-    [ [tag "geo" [pretty idnt]]
-    , concat [[vtag "lat" [wcord lat], vtag "lon" [wcord lon]] | (lat, lon) <- cs]
-    , maybe [] (pure . tag "alt" . pure . pretty) altM]
-  Dfn d -> tag "dfn" [pretty d]
+  ActDurTime t d -> unlines [bgn "actdur", tag "act" t, tag "dur" d, end "actdur"]
+  LocGeo idnt cs altM -> unlines
+    [ bgn "loc"
+    , tag "geo" idnt
+    , unlines [ unlines
+        [ bgn "lat"
+        , wcord lat
+        , end "lat"
+        , bgn "lon"
+        , wcord lon
+        , end "lon"
+        ] | (lat, lon) <- cs]
+    , case altM of
+        Nothing -> ""
+        Just al -> tag "alt" al
+    , end "loc"
+    ]
+  Dfn d -> tag "dfn" d
 
 paeinf :: Parser AEInfo
 paeinf = choice
@@ -116,9 +132,9 @@ paeinf = choice
 data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Double}
   deriving (Eq, Read, Show)
 
-wcord :: Cord -> Doc ann
-wcord (Cord d m s) = vtag "cord" [tag "dgs" [pretty d], tag "mns" [pretty m]
-  , tag "sds" [pretty s]]
+wcord :: Cord -> String
+wcord (Cord d m s) = unlines [bgn "cord", tag "dgs" d, tag "mns" m
+  , tag "sds" s, end "cord"]
 
 pcord :: Parser Cord
 pcord = ptag "cord" $ Cord <$> ptag "dgs" pint <*> ptag "mns" pint
@@ -128,9 +144,9 @@ pcord = ptag "cord" $ Cord <$> ptag "dgs" pint <*> ptag "mns" pint
 data NED = NED{north :: Double, east :: Double, down :: Double}
   deriving (Eq, Read, Show)
 
-wned :: NED -> Doc ann
-wned (NED n e d) = vtag "ned" [tag "north" [pretty $ show n]
-  , tag "east" [pretty $ show e], tag "down" [pretty $ show d]]
+wned :: NED -> String
+wned (NED n e d) = unlines [bgn "ned", tag "north" n, tag "east" e
+  , tag "down" d, end "ned"]
 
 pned :: Parser NED
 pned = ptag "ned" $ NED <$> ptag "north" pdbl <*> ptag "east" pdbl
@@ -142,19 +158,11 @@ bgn t = "<" ++ t ++ ">"
 end :: String -> String
 end t = "</" ++ t ++ ">"
 
-tag :: String -> [Doc ann] -> Doc ann
-tag t [] = pretty $ "<" ++ t ++ "/>"
-tag t cs = pretty (bgn t) <> hcat cs <> pretty (end t)
+tag :: Show a => String -> a -> String
+tag t a  = bgn t ++ show a ++ end t
 
-stag :: String -> String -> Doc ann
-stag t s = pretty $ bgn t ++ s ++ end t
-
-tag_ :: String -> Doc ann
-tag_ t = tag t []
-
-vtag :: String -> [Doc ann] -> Doc ann
-vtag t [] = tag_ t
-vtag t ts = vsep [pretty $ bgn t, vsep $ indent 2 <$> ts, pretty $ end t]
+tag_ :: String -> String
+tag_ t = "<" ++ t ++ "/>"
 
 type Parser = Parsec Void String
 

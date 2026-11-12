@@ -13,7 +13,7 @@ main = do
     ReadXch fM -> do
       i <- maybe getContents readFile fM
       putStrLn $ either M.errorBundlePretty show $ M.parse pxch "" i
-    WriteXch xch fM -> maybe putStrLn writeFile fM $ show $ wxch xch
+    WriteXch xch fM -> maybe putStrLn writeFile fM $ wxch xch
 
 prefs' :: ParserPrefs
 prefs' = prefs $ showHelpOnError <> showHelpOnEmpty

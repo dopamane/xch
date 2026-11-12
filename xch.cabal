@@ -26,7 +26,6 @@ library
   build-depends:
     base < 5,
     megaparsec,
-    prettyprinter,
     time
 
 executable xch
