@@ -17,7 +17,7 @@ type Xch = [XDat]
 -- | write exchange data in XML format
 wxch :: Xch -> String
 wxch [] = tag_ "xch"
-wxch xs = unlines $ [bgn "xch"] ++ map wxdat xs ++ [end "xch"]
+wxch xs = intercalate "\n" $ [bgn "xch"] ++ map wxdat xs ++ [end "xch"]
 
 -- | parse exchange XML data
 pxch :: Parser Xch
@@ -68,10 +68,9 @@ psvdat = choice
 ptime :: Parser POSIXTime
 ptime = do
   ts <- some digitChar
-  p  <- sym "."
-  ns <- some digitChar
+  nM <- optional $ try $ char '.' *> some digitChar
   s  <- sym "s"
-  either fail return $ readEither $ ts ++ p ++ ns ++ s
+  either fail return $ readEither $ ts ++ maybe "" ("." ++) nM ++ s
 
 -- | Communication health status
 data ComStat = Excelnt | Good | Bad | Lost

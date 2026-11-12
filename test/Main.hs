@@ -26,7 +26,9 @@ testSVDat = testCaseSteps "SVDat" $ \step -> do
   ptest "<xch><svdat><state><escape</state></svdat></xch>" [SVDat "<escape" []]
   step "time"
   ptest "<xch><svdat><state>foo</state><time>1794828361.374233416s</time></svdat></xch>"
-    [SVDat "foo" [Time $ read "1794828361.374233416s"]]
+    [SVDat "foo" [Time 1794828361.374233416]]
+  ptest "<xch><svdat><state></state><time>500s</time></svdat></xch>"
+    [SVDat "" [Time 500]]
   step "pos"
   ptest "<xch><svdat><state>foo</state><pos><ned>\
     \<north>3</north><east>-4</east><down>5</down>\
@@ -90,9 +92,31 @@ gxch = glist gxdat
 
 gxdat :: MonadGen m => m XDat
 gxdat = Gen.choice
-  [ MsnEvt <$> gstr <*> glist gstr
+  [ SVDat <$> gstr <*> glist gsvdat
+  , MsnEvt <$> gstr <*> glist gstr
   , ComStat <$> Gen.element [Excelnt, Good, Bad, Lost]
+  , AEDat <$> gstr <*> glist gaeinf
   ]
+
+gsvdat :: MonadGen m => m SVDat
+gsvdat = Gen.choice
+  [ Time <$> Gen.realFrac_ (Range.linearFracFrom 0 0 999999999999999)
+  , Pos <$> gned
+  , Vel <$> gned
+  ]
+
+gaeinf :: MonadGen m => m AEInfo
+gaeinf = Gen.choice
+  [ ActDurTime <$> gint <*> gint
+  , LocGeo <$> gstr <*> glist ((,) <$> gcord <*> gcord) <*> Gen.maybe gint
+  , Dfn <$> gstr
+  ]
+
+gcord :: MonadGen m => m Cord
+gcord = Cord <$> gint <*> gint <*> gdbl
+
+gned :: MonadGen m => m NED
+gned = NED <$> gdbl <*> gdbl <*> gdbl
 
 gint :: MonadGen m => m Integer
 gint = Gen.integral_ $ Range.linearFrom 0 (-999999999999999) 999999999999999
@@ -107,4 +131,4 @@ glist :: MonadGen m => m a -> m [a]
 glist = Gen.list rangeList
 
 rangeList :: Range Int
-rangeList = Range.linearFrom 0 0 256
+rangeList = Range.linearFrom 0 0 64
