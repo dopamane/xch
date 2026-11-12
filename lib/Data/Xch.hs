@@ -102,23 +102,23 @@ waeinf :: AEInfo -> String
 waeinf ae = case ae of
   ActDurTime t d -> intercalate "\n" [lvl 4 ++ bgn "actdur", lvl 6 ++ tag "act" t
     , lvl 6 ++ tag "dur" d, lvl 4 ++ end "actdur"]
-  LocGeo idnt cs altM -> unlines
-    [ bgn "loc"
-    , tag "geo" idnt
-    , unlines [ unlines
-        [ bgn "lat"
+  LocGeo idnt cs altM -> intercalate "\n" $ concat
+    [ [lvl 4 ++ bgn "loc"]
+    , [lvl 6 ++ stag "geo" idnt]
+    , [intercalate "\n" [ intercalate "\n"
+        [ lvl 6 ++ bgn "lat"
         , wcord lat
-        , end "lat"
-        , bgn "lon"
+        , lvl 6 ++ end "lat"
+        , lvl 6 ++ bgn "lon"
         , wcord lon
-        , end "lon"
-        ] | (lat, lon) <- cs]
+        , lvl 6 ++ end "lon"
+        ] | (lat, lon) <- cs] | not $ null cs]
     , case altM of
-        Nothing -> ""
-        Just al -> tag "alt" al
-    , end "loc"
+        Nothing -> []
+        Just al -> [lvl 6 ++ tag "alt" al]
+    , [lvl 4 ++ end "loc"]
     ]
-  Dfn d -> tag "dfn" d
+  Dfn d -> lvl 4 ++ stag "dfn" d
 
 paeinf :: Parser AEInfo
 paeinf = choice
@@ -134,8 +134,9 @@ data Cord = Cord{dgs :: Integer, mns :: Integer, sds :: Double}
   deriving (Eq, Read, Show)
 
 wcord :: Cord -> String
-wcord (Cord d m s) = unlines [bgn "cord", tag "dgs" d, tag "mns" m
-  , tag "sds" s, end "cord"]
+wcord (Cord d m s) = intercalate "\n" [lvl 8 ++ bgn "cord"
+  , lvl 10 ++ tag "dgs" d, lvl 10 ++ tag "mns" m
+  , lvl 10 ++ tag "sds" s, lvl 8 ++ end "cord"]
 
 pcord :: Parser Cord
 pcord = ptag "cord" $ Cord <$> ptag "dgs" pint <*> ptag "mns" pint
