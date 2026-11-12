@@ -56,9 +56,9 @@ data SVDat
 
 wsvdat :: SVDat -> String
 wsvdat s = case s of
-  Time t -> tag "time" t
-  Pos ned -> unlines [bgn "pos", wned ned, end "pos"]
-  Vel ned -> unlines [bgn "vel", wned ned, end "vel"]
+  Time t -> lvl 4 ++ tag "time" t
+  Pos ned -> intercalate "\n" [lvl 4 ++ bgn "pos", wned ned, lvl 4 ++ end "pos"]
+  Vel ned -> intercalate "\n" [lvl 4 ++ bgn "vel", wned ned, lvl 4 ++ end "vel"]
 
 psvdat :: Parser SVDat
 psvdat = choice
@@ -145,8 +145,8 @@ data NED = NED{north :: Double, east :: Double, down :: Double}
   deriving (Eq, Read, Show)
 
 wned :: NED -> String
-wned (NED n e d) = unlines [bgn "ned", tag "north" n, tag "east" e
-  , tag "down" d, end "ned"]
+wned (NED n e d) = intercalate "\n" [lvl 6 ++ bgn "ned", lvl 8 ++ tag "north" n
+  , lvl 8 ++ tag "east" e, lvl 8 ++ tag "down" d, lvl 6 ++ end "ned"]
 
 pned :: Parser NED
 pned = ptag "ned" $ NED <$> ptag "north" pdbl <*> ptag "east" pdbl
