@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Data.List
 import Data.Xch
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
@@ -93,10 +94,10 @@ gxch = glist gxdat
 
 gxdat :: MonadGen m => m XDat
 gxdat = Gen.choice
-  [ SVDat <$> gstr <*> glist gsvdat
-  , MsnEvt <$> gstr <*> glist gstr
+  [ SVDat <$> gstr "state" <*> glist gsvdat
+  , MsnEvt <$> gstr "trig" <*> glist (gstr "evt")
   , ComStat <$> Gen.element [Excelnt, Good, Bad, Lost]
-  , AEDat <$> gstr <*> glist gaeinf
+  , AEDat <$> gstr "ae" <*> glist gaeinf
   ]
 
 gsvdat :: MonadGen m => m SVDat
@@ -109,8 +110,8 @@ gsvdat = Gen.choice
 gaeinf :: MonadGen m => m AEInfo
 gaeinf = Gen.choice
   [ ActDurTime <$> gint <*> gint
-  , LocGeo <$> gstr <*> glist ((,) <$> gcord <*> gcord) <*> Gen.maybe gint
-  , Dfn <$> gstr
+  , LocGeo <$> gstr "geo" <*> glist ((,) <$> gcord <*> gcord) <*> Gen.maybe gint
+  , Dfn <$> gstr "dfn"
   ]
 
 gcord :: MonadGen m => m Cord
@@ -125,8 +126,12 @@ gint = Gen.integral_ $ Range.linearFrom 0 (-999999999999999) 999999999999999
 gdbl :: MonadGen m => m Double
 gdbl = Gen.double $ Range.linearFracFrom 0 (-999999999999999) 999999999999999
 
-gstr :: MonadGen m => m String
-gstr = Gen.string rangeList Gen.unicode
+gstr :: MonadGen m => String -> m String
+gstr t = do
+  str <- Gen.string rangeList Gen.unicode
+  if concat ["<", t, "/>"] `isInfixOf` str
+    then Gen.discard
+    else return str
 
 glist :: MonadGen m => m a -> m [a]
 glist = Gen.list rangeList
