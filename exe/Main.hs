@@ -74,6 +74,6 @@ parseCord pfx = Cord
 
 parseNED :: String -> Parser NED
 parseNED pfx = NED
-  <$> option auto (long (pfx ++ "-north") <> metavar "DBL" <> help "north coordinate")
-  <*> option auto (long (pfx ++ "-east") <> metavar "DBL" <> help "east coordinate")
-  <*> option auto (long (pfx ++ "-down") <> metavar "DBL" <> help "down coordinate")
+  <$> option auto (long (pfx ++ "n") <> metavar "DBL" <> help (pfx ++ " north coordinate"))
+  <*> option auto (long (pfx ++ "e") <> metavar "DBL" <> help (pfx ++ " east coordinate"))
+  <*> option auto (long (pfx ++ "d") <> metavar "DBL" <> help (pfx ++ " down coordinate"))

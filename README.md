@@ -10,10 +10,17 @@ xch --help
 xch w --excellent | xch r
 ```
 
+Install
+
+```
+cabal install xch
+```
+
 Development
 
 ```
 cabal build
+cabal haddock
 cabal test
 cabal run xch -- --help
 ```
