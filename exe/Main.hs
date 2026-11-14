@@ -61,7 +61,7 @@ parseXDat = asum
       <*> option auto (long "dur" <> metavar "INT" <> help "duration time mins")
     , LocGeo <$> strOption (long "geo" <> metavar "STR" <> help "geographic descriptor")
       <*> many ((,) <$> parseCord "lat" <*> parseCord "lon")
-      <*> optional (option auto $ long "alt" <> metavar "INT" <> help "altitude")
+      <*> optional (option auto $ long "alt" <> metavar "DBL" <> help "altitude")
     , Dfn <$> strOption (long "dfn" <> metavar "STR" <> help "definition")
     ]
   ]

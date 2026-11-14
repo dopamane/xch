@@ -110,7 +110,7 @@ gsvdat = Gen.choice
 gaeinf :: MonadGen m => m AEInfo
 gaeinf = Gen.choice
   [ ActDurTime <$> gint <*> gint
-  , LocGeo <$> gstr "geo" <*> glist ((,) <$> gcord <*> gcord) <*> Gen.maybe gint
+  , LocGeo <$> gstr "geo" <*> glist ((,) <$> gcord <*> gcord) <*> Gen.maybe gdbl
   , Dfn <$> gstr "dfn"
   ]
 

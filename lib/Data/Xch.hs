@@ -92,7 +92,7 @@ data AEInfo
   = -- | activation time and duration
     ActDurTime Integer Integer
   | -- | location\/geometry: name, bounds @(lat,lon)@ and altitude
-    LocGeo String [(Cord, Cord)] (Maybe Integer)
+    LocGeo String [(Cord, Cord)] (Maybe Double)
   | -- | definition of anomaly
     Dfn String
   deriving (Eq, Read, Show)
@@ -124,7 +124,7 @@ paeinf = choice
   [ try $ ptag "actdur" $ ActDurTime <$> ptag "act" pint <*> ptag "dur" pint
   , try $ ptag "loc" $ LocGeo <$> pstag "geo"
     <*> many (try $ (,) <$> ptag "lat" pcord <*> ptag "lon" pcord)
-    <*> optional (try $ ptag "alt" pint)
+    <*> optional (try $ ptag "alt" pdbl)
   , try $ Dfn <$> pstag "dfn"
   ]
 
