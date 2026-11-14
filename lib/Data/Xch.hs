@@ -5,11 +5,11 @@ module Data.Xch (Xch, wxch, pxch, XDat(..), SVDat(..), ComStat(..)
 import Data.Functor
 import Data.List
 import Data.Time.Clock.POSIX
+import Data.Time.Format.ISO8601
 import Data.Void
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import Text.Read hiding (choice)
 
 -- | exchange
 type Xch = [XDat]
@@ -56,7 +56,7 @@ data SVDat
 
 wsvdat :: SVDat -> String
 wsvdat s = case s of
-  Time t -> lvl 4 ++ tag "time" t
+  Time t -> lvl 4 ++ stag "time" (iso8601Show $ posixSecondsToUTCTime t)
   Pos ned -> intercalate "\n" [lvl 4 ++ bgn "pos", wned ned, lvl 4 ++ end "pos"]
   Vel ned -> intercalate "\n" [lvl 4 ++ bgn "vel", wned ned, lvl 4 ++ end "vel"]
 
@@ -67,24 +67,30 @@ psvdat = choice
 
 ptime :: Parser POSIXTime
 ptime = do
-  ts <- some digitChar
-  nM <- optional $ try $ char '.' *> some digitChar
-  s  <- sym "s"
-  either fail return $ readEither $ ts ++ maybe "" ("." ++) nM ++ s
+  yyyy <- count 4 digitChar <* char '-'
+  mm   <- count 2 digitChar <* char '-'
+  dd   <- count 2 digitChar <* char 'T'
+  hh   <- count 2 digitChar <* char ':'
+  mm'  <- count 2 digitChar <* char ':'
+  ss   <- count 2 digitChar
+  ssM  <- optional $ char '.' *> some digitChar
+  _    <- char 'Z'
+  fmap utcTimeToPOSIXSeconds $ iso8601ParseM $
+    concat [yyyy, "-", mm, "-", dd, "T", hh, ":", mm', ":", ss, maybe "" ("." ++) ssM, "Z"]
 
 -- | Communication health status
-data ComStat = Excelnt | Good | Bad | Lost
+data ComStat = Excellent | Good | Bad | Lost
   deriving (Bounded, Enum, Eq, Read, Show)
 
 wcomstat :: ComStat -> String
 wcomstat s = mappend "    " $ tag_ $ case s of
-  Excelnt -> "excellent"
+  Excellent -> "excellent"
   Good -> "good"
   Bad -> "bad"
   Lost -> "lost"
 
 pcomstat :: Parser ComStat
-pcomstat = choice [try $ ptag_ "excellent" $> Excelnt, try $ ptag_ "good" $> Good
+pcomstat = choice [try $ ptag_ "excellent" $> Excellent, try $ ptag_ "good" $> Good
   , try $ ptag_ "bad" $> Bad, try $ ptag_ "lost" $> Lost]
 
 -- | Anomaly and emergency info

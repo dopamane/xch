@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Data.List
+import Data.Word
 import Data.Xch
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
@@ -27,10 +28,10 @@ testSVDat = testCaseSteps "SVDat" $ \step -> do
   ptest "<xch><svdat><state><escape</state></svdat></xch>" [SVDat "<escape" []]
   ptest "<xch><svdat><state>\n\t</state></svdat></xch>" [SVDat "\n\t" []]
   step "time"
-  ptest "<xch><svdat><state>foo</state><time>1794828361.374233416s</time></svdat></xch>"
-    [SVDat "foo" [Time 1794828361.374233416]]
-  ptest "<xch><svdat><state></state><time>500s</time></svdat></xch>"
-    [SVDat "" [Time 500]]
+  ptest "<xch><svdat><state>foo</state><time>2026-11-14T04:58:32.583506318Z</time></svdat></xch>"
+    [SVDat "foo" [Time 1794632312.583506318]]
+  ptest "<xch><svdat><state></state><time>2026-11-14T04:58:32Z</time></svdat></xch>"
+    [SVDat "" [Time 1794632312]]
   step "pos"
   ptest "<xch><svdat><state>foo</state><pos><ned>\
     \<north>3</north><east>-4</east><down>5</down>\
@@ -59,7 +60,7 @@ testMsnEvt = testCase "MsnEvt" $ do
 
 testComStat :: TestTree
 testComStat = testCase "ComStat" $ do
-  ptest "<xch><com><excellent/></com></xch>" [ComStat Excelnt]
+  ptest "<xch><com><excellent/></com></xch>" [ComStat Excellent]
   ptest "<xch><com><good/></com></xch>" [ComStat Good]
   ptest "<xch><com><bad/></com></xch>" [ComStat Bad]
   ptest "<xch><com><lost/></com></xch>" [ComStat Lost]
@@ -96,13 +97,13 @@ gxdat :: MonadGen m => m XDat
 gxdat = Gen.choice
   [ SVDat <$> gstr "state" <*> glist gsvdat
   , MsnEvt <$> gstr "trig" <*> glist (gstr "evt")
-  , ComStat <$> Gen.element [Excelnt, Good, Bad, Lost]
+  , ComStat <$> Gen.element [Excellent, Good, Bad, Lost]
   , AEDat <$> gstr "ae" <*> glist gaeinf
   ]
 
 gsvdat :: MonadGen m => m SVDat
 gsvdat = Gen.choice
-  [ Time <$> Gen.realFrac_ (Range.linearFracFrom 0 0 999999999999999)
+  [ Time <$> Gen.realFrac_ (Range.linearFracFrom 0 0 $ fromIntegral (maxBound :: Word32))
   , Pos <$> gned
   , Vel <$> gned
   ]

@@ -49,7 +49,7 @@ parseXDat = asum
     strOption (long "trig" <> metavar "STR" <> help "trigger") <*>
     many (strOption $ long "evt" <> metavar "STR" <> help "event")
   , parserOptionGroup "communication health status" $ ComStat <$> asum
-    [ flag' Excelnt $ long "excellent" <> help "excellent connection"
+    [ flag' Excellent $ long "excellent" <> help "excellent connection"
     , flag' Good $ long "good" <> help "good connection"
     , flag' Bad $ long "bad" <> help "bad connection"
     , flag' Lost $ long "lost" <> help "lost connection"
