@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               xch
-version:            0.1.0.0
+version:            0.1.0.1
 synopsis:           Space Data Exchange
 description:        ASTM F3514-21
 homepage:           https://github.com/dopamane/xch
