@@ -1,19 +1,38 @@
 module Main (main) where
 
+import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.List
 import Data.Word
 import Data.Xch
 import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
+import Paths_xch
+import System.FilePath
 import Text.Megaparsec
 import Test.Tasty
+import Test.Tasty.Golden
 import Test.Tasty.HUnit
 import Test.Tasty.Hedgehog
 
 main :: IO ()
-main = defaultMain $ testGroup "Test.Xch"
-  [testEmpty, testSVDat, testMsnEvt, testComStat, testAEDat, ptrip]
+main = getDataDir >>= \dataDir ->
+  defaultMain $ testGroup "Test.Xch"
+  [ testEmpty, testSVDat, testMsnEvt, testComStat, testAEDat, ptrip
+  , goldTest "sample" (dataDir </> "sample.golden")
+    [ SVDat "foo" [Time 34.5, Pos $ NED 0 1 2, Vel $ NED 0.3 0.4 0.5]
+    , SVDat "bar" [Time 2.2, Pos $ NED 0.5 0.6 0.7]
+    , MsnEvt "at noon" ["lunch", "hot dog", "wine"]
+    , MsnEvt "at 6PM"  ["dinner", "spaghetti", "boba"]
+    , ComStat Good
+    , AEDat "anomaly"
+      [ ActDurTime 4 5
+      , LocGeo "area 61" [(Cord 0 1 2, Cord 3 4 5.9), (Cord 5 6 7.8, Cord 9 10 11.1)] (Just 3.14)
+      , Dfn "cactus"
+      ]
+    , AEDat "emergency" [Dfn "fashion"]
+    ]
+  ]
 
 testEmpty :: TestTree
 testEmpty = testCase "empty" $ do
@@ -139,3 +158,6 @@ glist = Gen.list rangeList
 
 rangeList :: Range Int
 rangeList = Range.linearFrom 0 0 64
+
+goldTest :: String -> FilePath -> Xch -> TestTree
+goldTest n p x = goldenVsString n p $ return $ BS.pack $ wxch x ++ "\n"

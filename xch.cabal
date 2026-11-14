@@ -13,6 +13,8 @@ category:           Data
 build-type:         Simple
 extra-doc-files:    CHANGELOG.md
                     README.md
+data-dir:           data
+data-files:         sample.golden
 
 source-repository head
   type: git
@@ -47,11 +49,16 @@ test-suite test
   hs-source-dirs:   test
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
+  other-modules:    Paths_xch
+  autogen-modules:  Paths_xch
   build-depends:
     base < 5,
+    bytestring,
+    filepath,
     hedgehog,
     megaparsec,
     tasty,
+    tasty-golden,
     tasty-hedgehog,
     tasty-hunit,
     xch
