@@ -24,6 +24,7 @@ testSVDat = testCaseSteps "SVDat" $ \step -> do
   ptest "<xch><svdat><state>foo</state></svdat></xch>" [SVDat "foo" []]
   ptest "<xch><svdat><state>foo bar</state></svdat></xch>" [SVDat "foo bar" []]
   ptest "<xch><svdat><state><escape</state></svdat></xch>" [SVDat "<escape" []]
+  ptest "<xch><svdat><state>\n\t</state></svdat></xch>" [SVDat "\n\t" []]
   step "time"
   ptest "<xch><svdat><state>foo</state><time>1794828361.374233416s</time></svdat></xch>"
     [SVDat "foo" [Time 1794828361.374233416]]
